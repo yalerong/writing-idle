@@ -123,12 +123,14 @@
                 <p>查看正文/规格卡状态、相关资料，并生成只读开写包预览。</p>
               </div>
               <div id="chapterDetailContent" class="detail-content" hidden>
-                <div class="panel-heading">
+                <div class="panel-heading writer-heading">
                   <div>
                     <h3 id="detailTitle">-</h3>
                     <span id="detailMeta">-</span>
                   </div>
-                  <button id="copyPackButton" class="secondary-action" type="button">复制开写包</button>
+                  <div class="writer-actions">
+                    <button id="copyPackButton" class="secondary-action" type="button">复制开写包</button>
+                  </div>
                 </div>
                 <div id="detailStatus" class="status-row"></div>
                 <div class="detail-block editor-block">
@@ -141,18 +143,23 @@
                   </div>
                   <textarea id="manuscriptEditor" spellcheck="true" placeholder="这里编辑当前章节正文"></textarea>
                 </div>
-                <div class="detail-block">
-                  <h4>来源</h4>
-                  <div id="detailSources" class="source-list"></div>
-                </div>
-                <div class="detail-block">
-                  <h4>相关资料</h4>
-                  <div id="detailAssets" class="related-assets"></div>
-                </div>
-                <div class="detail-block">
-                  <h4>开写包 Dry-run</h4>
-                  <textarea id="contextPackPreview" readonly spellcheck="false"></textarea>
-                </div>
+                <details class="detail-foldout">
+                  <summary>写作资料</summary>
+                  <div class="detail-block">
+                    <h4>来源</h4>
+                    <div id="detailSources" class="source-list"></div>
+                  </div>
+                  <div class="detail-block">
+                    <h4>相关资料</h4>
+                    <div id="detailAssets" class="related-assets"></div>
+                  </div>
+                </details>
+                <details class="detail-foldout">
+                  <summary>开写包 Dry-run</summary>
+                  <div class="detail-block">
+                    <textarea id="contextPackPreview" readonly spellcheck="false"></textarea>
+                  </div>
+                </details>
               </div>
             </aside>
           </div>

@@ -22,6 +22,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -517,7 +521,7 @@ body:not(.has-project) .view {
 
 .chapter-workbench {
   display: grid;
-  grid-template-columns: minmax(320px, 0.9fr) minmax(380px, 1.1fr);
+  grid-template-columns: 330px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -635,14 +639,29 @@ body:not(.has-project) .view {
 
 .chapter-detail {
   position: sticky;
-  top: 18px;
-  max-height: calc(100vh - 52px);
+  top: 14px;
+  max-height: calc(100vh - 30px);
   overflow: auto;
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   padding: 0;
   border-radius: 0;
+}
+
+.writer-heading {
+  align-items: center;
+  background: #fbfaf5;
+}
+
+.writer-heading h3 {
+  font-size: 18px;
+}
+
+.writer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .detail-empty {
@@ -660,7 +679,7 @@ body:not(.has-project) .view {
 
 .detail-content {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   padding-bottom: 16px;
 }
 
@@ -680,8 +699,11 @@ body:not(.has-project) .view {
 }
 
 .editor-block {
-  padding: 12px;
-  border: 1px solid var(--line);
+  margin-top: 0;
+  padding: 14px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   background: #fffaf1;
 }
 
@@ -702,6 +724,29 @@ body:not(.has-project) .view {
   color: var(--muted);
   font-family: Consolas, "Microsoft YaHei", monospace;
   font-size: 12px;
+}
+
+.detail-foldout {
+  margin: 0 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.detail-foldout summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.detail-foldout[open] summary {
+  border-bottom: 1px solid var(--line);
+  background: #f4efe4;
+}
+
+.detail-foldout .detail-block {
+  margin: 12px;
 }
 
 .source-list,
@@ -736,15 +781,15 @@ body:not(.has-project) .view {
 
 #manuscriptEditor {
   width: 100%;
-  min-height: 360px;
+  min-height: min(62vh, 620px);
   border: 1px solid var(--line);
   background: #fffdf8;
   color: var(--ink);
-  padding: 12px;
+  padding: 28px 34px;
   resize: vertical;
-  line-height: 1.75;
+  line-height: 1.9;
   font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 #manuscriptEditor:disabled {
