@@ -49,6 +49,7 @@ const els = {
   volumeProgress: qs("#volumeProgress"),
   recentFiles: qs("#recentFiles"),
   volumeFilter: qs<HTMLSelectElement>("#volumeFilter"),
+  volumeQuickOpen: qs("#volumeQuickOpen"),
   chapterCountLabel: qs("#chapterCountLabel"),
   chapterBoard: qs("#chapterBoard"),
   chapterDetail: qs("#chapterDetail"),
@@ -104,7 +105,19 @@ els.searchInput.addEventListener("input", () => {
   renderCurrentView();
 });
 
-els.volumeFilter.addEventListener("change", renderChapters);
+els.volumeFilter.addEventListener("change", () => {
+  renderVolumeQuickOpen();
+  renderChapters();
+  renderChapterDetail();
+});
+els.volumeQuickOpen.addEventListener("click", (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-volume-name]");
+  if (!button) return;
+  els.volumeFilter.value = button.dataset.volumeName ?? "all";
+  renderVolumeQuickOpen();
+  renderChapters();
+  renderChapterDetail();
+});
 els.chapterBoard.addEventListener("click", (event) => {
   const card = (event.target as HTMLElement).closest<HTMLElement>("[data-chapter-id]");
   if (!card) return;
@@ -155,6 +168,7 @@ function renderAll(): void {
   renderMetrics();
   renderDashboard();
   renderVolumeFilter();
+  renderVolumeQuickOpen();
   renderChapters();
   renderChapterDetail();
   renderAssets();
@@ -209,12 +223,31 @@ function renderVolumeFilter(): void {
   const project = state.project;
   if (!project) return;
   const current = els.volumeFilter.value;
-  const options = project.volumes
-    .filter((volume) => volume.manuscript.length || volume.specs.length)
+  const activeVolumes = getActiveVolumes(project);
+  const options = activeVolumes
     .map((volume) => `<option value="${volume.name}">${volume.name}</option>`)
     .join("");
   els.volumeFilter.innerHTML = `<option value="all">全部卷</option>${options}`;
-  els.volumeFilter.value = current || "all";
+  els.volumeFilter.value = current && (current === "all" || activeVolumes.some((volume) => volume.name === current)) ? current : "all";
+}
+
+function renderVolumeQuickOpen(): void {
+  const project = state.project;
+  if (!project) return;
+  const selected = els.volumeFilter.value || "all";
+  const buttons = [
+    { label: "全部", value: "all" },
+    ...getActiveVolumes(project).map((volume) => ({ label: volume.name, value: volume.name })),
+  ];
+  els.volumeQuickOpen.innerHTML = buttons
+    .map(
+      (button) => `
+        <button class="${button.value === selected ? "active" : ""}" type="button" data-volume-name="${escapeHtml(button.value)}">
+          ${escapeHtml(button.label)}
+        </button>
+      `,
+    )
+    .join("");
 }
 
 function renderChapters(): void {
@@ -380,6 +413,10 @@ function renderCurrentView(): void {
 function filterBySearch<T>(items: T[], getText: (item: T) => string): T[] {
   if (!state.search) return items;
   return items.filter((item) => getText(item).toLowerCase().includes(state.search));
+}
+
+function getActiveVolumes(project: ProjectModel): ProjectModel["volumes"] {
+  return project.volumes.filter((volume) => volume.manuscript.length || volume.specs.length);
 }
 
 function qs<T extends Element = HTMLElement>(selector: string): T {

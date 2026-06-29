@@ -468,10 +468,51 @@ body:not(.has-project) .view {
 }
 
 .section-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.volume-jump {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.volume-jump > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 12px;
+}
+
+.volume-jump-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.volume-jump-list button {
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink-2);
+  padding: 5px 10px;
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 12px;
+}
+
+.volume-jump-list button.active {
+  border-color: #d49a78;
+  background: #fff7ec;
+  color: var(--accent);
+  font-weight: 800;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .chapter-workbench {
@@ -740,6 +781,16 @@ progress {
 
   .topbar input {
     width: 100%;
+  }
+
+  .section-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .volume-jump {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .metric-grid,

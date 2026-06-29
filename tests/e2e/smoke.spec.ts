@@ -14,6 +14,8 @@ test("loads a fixture project and renders chapter context pack", async ({ page }
 
   await expect(page.getByText("2 个正文文件")).toBeVisible();
   await page.getByRole("button", { name: "章节" }).click();
+  await page.locator("#volumeQuickOpen").getByRole("button", { name: "卷一" }).click();
+  await expect(page.locator("#volumeFilter")).toHaveValue("卷一");
   await page.getByRole("button", { name: /卷一 · 亡命/ }).click();
 
   await expect(page.locator("#detailTitle")).toHaveText("卷一 · 亡命");
