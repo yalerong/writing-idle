@@ -1,0 +1,22 @@
+{
+  "name": "novel-idle",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first production workspace for Markdown-based longform fiction projects.",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 8787",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 8787",
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "quality": "npm run build && npm run test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0",
+    "vitest": "^4.1.9"
+  }
+}

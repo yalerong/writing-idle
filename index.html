@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Novel Idle</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">绺</div>
+          <div>
+            <h1>Novel Idle</h1>
+            <p id="repoLabel">未加载工作仓</p>
+          </div>
+        </div>
+
+        <button id="pickFolderButton" class="primary-action" type="button">
+          选择 novel-lab 文件夹
+        </button>
+        <input id="folderInput" class="sr-only" type="file" webkitdirectory multiple />
+
+        <nav class="nav-list" aria-label="工作台视图">
+          <button class="nav-item active" type="button" data-view="dashboard">总览</button>
+          <button class="nav-item" type="button" data-view="chapters">章节</button>
+          <button class="nav-item" type="button" data-view="assets">资料库</button>
+          <button class="nav-item" type="button" data-view="idle">Idle</button>
+        </nav>
+
+        <div class="sidebar-meta">
+          <div>
+            <span>扫描时间</span>
+            <strong id="scanTime">-</strong>
+          </div>
+          <div>
+            <span>本地快照</span>
+            <strong id="snapshotStatus">未建立</strong>
+          </div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Markdown 写作工程台</p>
+            <h2 id="viewTitle">总览</h2>
+          </div>
+          <div class="topbar-actions">
+            <input id="searchInput" type="search" placeholder="搜索文件、人物、场景、章节" />
+            <button id="saveSnapshotButton" class="secondary-action" type="button" disabled>保存快照</button>
+          </div>
+        </header>
+
+        <section id="emptyState" class="empty-state">
+          <div class="ink-visual" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <h2>把 novel-lab 接进来</h2>
+          <p>选择 `C:\Users\z1628\novel-lab` 后，这里会生成卷级进度、资料库索引、最近改动和写作 idle 指标。</p>
+          <button class="primary-action" type="button" data-pick-folder>选择文件夹</button>
+        </section>
+
+        <section id="dashboardView" class="view active" data-view-panel="dashboard">
+          <div class="metric-grid">
+            <article class="metric-tile">
+              <span>正文总量</span>
+              <strong id="metricManuscriptChars">0</strong>
+              <small id="metricManuscriptFiles">0 个正文文件</small>
+            </article>
+            <article class="metric-tile">
+              <span>规格卡</span>
+              <strong id="metricSpecFiles">0</strong>
+              <small>章前卡覆盖</small>
+            </article>
+            <article class="metric-tile">
+              <span>资料库</span>
+              <strong id="metricAssetFiles">0</strong>
+              <small>人物 / 场景 / canon</small>
+            </article>
+            <article class="metric-tile accent">
+              <span>引擎等级</span>
+              <strong id="metricLevel">Lv. 0</strong>
+              <small id="metricLevelHint">等待扫描</small>
+            </article>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>卷级进度</h3>
+                <span id="volumeSummary">-</span>
+              </div>
+              <div id="volumeProgress" class="volume-progress"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>最近改动</h3>
+                <span>按文件时间</span>
+              </div>
+              <div id="recentFiles" class="file-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="chaptersView" class="view" data-view-panel="chapters">
+          <div class="section-toolbar">
+            <select id="volumeFilter" aria-label="选择卷"></select>
+            <span id="chapterCountLabel">0 章</span>
+          </div>
+          <div class="chapter-workbench">
+            <div id="chapterBoard" class="chapter-board"></div>
+            <aside id="chapterDetail" class="chapter-detail">
+              <div class="detail-empty">
+                <h3>选择一章</h3>
+                <p>查看正文/规格卡状态、相关资料，并生成只读开写包预览。</p>
+              </div>
+              <div id="chapterDetailContent" class="detail-content" hidden>
+                <div class="panel-heading">
+                  <div>
+                    <h3 id="detailTitle">-</h3>
+                    <span id="detailMeta">-</span>
+                  </div>
+                  <button id="copyPackButton" class="secondary-action" type="button">复制开写包</button>
+                </div>
+                <div id="detailStatus" class="status-row"></div>
+                <div class="detail-block">
+                  <h4>来源</h4>
+                  <div id="detailSources" class="source-list"></div>
+                </div>
+                <div class="detail-block">
+                  <h4>相关资料</h4>
+                  <div id="detailAssets" class="related-assets"></div>
+                </div>
+                <div class="detail-block">
+                  <h4>开写包 Dry-run</h4>
+                  <textarea id="contextPackPreview" readonly spellcheck="false"></textarea>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="assetsView" class="view" data-view-panel="assets">
+          <div class="asset-layout">
+            <div class="asset-groups">
+              <button class="asset-tab active" type="button" data-asset-group="character">人物</button>
+              <button class="asset-tab" type="button" data-asset-group="site">场景</button>
+              <button class="asset-tab" type="button" data-asset-group="canon">Canon</button>
+              <button class="asset-tab" type="button" data-asset-group="project">工程</button>
+            </div>
+            <div id="assetList" class="asset-list"></div>
+          </div>
+        </section>
+
+        <section id="idleView" class="view" data-view-panel="idle">
+          <div class="idle-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>今日推进</h3>
+                <span id="deltaLabel">基于上次快照</span>
+              </div>
+              <div class="idle-stat">
+                <strong id="idleDelta">0</strong>
+                <span>净字数变化</span>
+              </div>
+              <div class="idle-bars">
+                <div>
+                  <span>正文</span>
+                  <progress id="manuscriptProgress" value="0" max="100"></progress>
+                </div>
+                <div>
+                  <span>规格卡</span>
+                  <progress id="specProgress" value="0" max="100"></progress>
+                </div>
+                <div>
+                  <span>资料库</span>
+                  <progress id="assetProgress" value="0" max="100"></progress>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>三十日热力</h3>
+                <span>文件修改密度</span>
+              </div>
+              <div id="heatmap" class="heatmap"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <h3>下一步队列</h3>
+              <span>按当前结构推断</span>
+            </div>
+            <div id="nextQueue" class="next-queue"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <template id="volumeRowTemplate">
+      <div class="volume-row">
+        <div>
+          <strong></strong>
+          <span></span>
+        </div>
+        <div class="progress-line"><i></i></div>
+      </div>
+    </template>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
