@@ -280,25 +280,59 @@ function renderChapters(): void {
     (chapter) => `${chapter.volume} ${chapter.title}`,
   );
   els.chapterCountLabel.textContent = `${chapters.length} 章`;
-  els.chapterBoard.innerHTML = chapters.map(renderChapterCard).join("");
   if (chapters.length && !chapters.some((chapter) => chapterId(chapter) === state.selectedChapterId)) {
     state.selectedChapterId = chapterId(chapters[0]);
   }
+  els.chapterBoard.innerHTML = renderChapterOutline(chapters);
+}
+
+function renderChapterOutline(chapters: ChapterSummary[]): string {
+  const byVolume = new Map<string, ChapterSummary[]>();
+  for (const chapter of chapters) {
+    const volumeChapters = byVolume.get(chapter.volume) ?? [];
+    volumeChapters.push(chapter);
+    byVolume.set(chapter.volume, volumeChapters);
+  }
+  return [...byVolume.entries()]
+    .map(
+      ([volume, volumeChapters]) => `
+        <section class="chapter-volume-group">
+          <div class="chapter-volume-heading">
+            <strong>${escapeHtml(volume)}</strong>
+            <span>${volumeChapters.length} 章</span>
+          </div>
+          <div class="chapter-volume-list">
+            ${volumeChapters.map(renderChapterCard).join("")}
+          </div>
+        </section>
+      `,
+    )
+    .join("");
 }
 
 function renderChapterCard(chapter: ChapterSummary): string {
   const chars = chapter.manuscript ? countWritingUnits(chapter.manuscript.text) : 0;
   const selected = chapterId(chapter) === state.selectedChapterId;
+  const status = chapter.manuscript && chapter.spec ? "ready" : chapter.manuscript || chapter.spec ? "partial" : "missing";
   return `
-    <button class="chapter-card ${selected ? "selected" : ""}" type="button" data-chapter-id="${escapeHtml(chapterId(chapter))}">
-      <h3>${escapeHtml(chapter.volume)} · ${escapeHtml(chapter.title)}</h3>
-      <small>${chapter.manuscript ? formatNumber(chars) : "0"} 字</small>
-      <div class="status-row">
-        <span class="pill ${chapter.spec ? "ok" : "warn"}">规格卡${chapter.spec ? "有" : "缺"}</span>
-        <span class="pill ${chapter.manuscript ? "ok" : "warn"}">正文${chapter.manuscript ? "有" : "缺"}</span>
-        <span class="pill ${chapter.manuscript && chapter.spec ? "ok" : "warn"}">${chapter.manuscript && chapter.spec ? "可进入闸门" : "待补齐"}</span>
+    <button class="chapter-card ${selected ? "selected" : ""}" type="button" data-chapter-id="${escapeHtml(chapterId(chapter))}" aria-label="${escapeHtml(`${chapter.volume} · ${chapter.title}`)}">
+      <div class="chapter-line">
+        <span class="chapter-status" data-status="${status}"></span>
+        <h3>${escapeHtml(chapter.title)}</h3>
+        <small>${chapter.manuscript ? formatNumber(chars) : "0"} 字</small>
       </div>
-      <small>${escapeHtml(chapter.manuscript?.path || chapter.spec?.path || "")}</small>
+      ${
+        selected
+          ? `
+            <div class="status-row">
+              <span class="pill ${chapter.spec ? "ok" : "warn"}">规格卡${chapter.spec ? "有" : "缺"}</span>
+              <span class="pill ${chapter.manuscript ? "ok" : "warn"}">正文${chapter.manuscript ? "有" : "缺"}</span>
+              <span class="pill ${chapter.manuscript && chapter.spec ? "ok" : "warn"}">${chapter.manuscript && chapter.spec ? "可进入闸门" : "待补齐"}</span>
+            </div>
+            <small>${escapeHtml(chapter.manuscript?.path || chapter.spec?.path || "")}</small>
+          `
+          : ""
+      }
     </button>
   `;
 }
