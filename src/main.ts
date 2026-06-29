@@ -13,7 +13,18 @@ interface AppState {
   search: string;
   selectedChapterId: string | null;
   currentContextPack: string;
+  agentProviders: AgentProvider[];
 }
+
+interface AgentProvider {
+  id: string;
+  label: string;
+  configured: boolean;
+  defaultModel: string;
+  models: string[];
+}
+
+type AgentTask = "context-audit" | "draft-preview" | "prose-review" | "consistency-check";
 
 const state: AppState = {
   project: null,
@@ -23,6 +34,7 @@ const state: AppState = {
   search: "",
   selectedChapterId: null,
   currentContextPack: "",
+  agentProviders: [],
 };
 
 const els = {
@@ -66,6 +78,14 @@ const els = {
   saveManuscriptButton: qs<HTMLButtonElement>("#saveManuscriptButton"),
   contextPackPreview: qs<HTMLTextAreaElement>("#contextPackPreview"),
   copyPackButton: qs<HTMLButtonElement>("#copyPackButton"),
+  agentServerUrl: qs<HTMLInputElement>("#agentServerUrl"),
+  agentProvider: qs<HTMLSelectElement>("#agentProvider"),
+  agentModel: qs<HTMLInputElement>("#agentModel"),
+  agentTask: qs<HTMLSelectElement>("#agentTask"),
+  agentStatus: qs("#agentStatus"),
+  refreshAgentButton: qs<HTMLButtonElement>("#refreshAgentButton"),
+  runAgentButton: qs<HTMLButtonElement>("#runAgentButton"),
+  agentOutput: qs<HTMLTextAreaElement>("#agentOutput"),
   assetTabs: document.querySelectorAll<HTMLButtonElement>(".asset-tab"),
   assetList: qs("#assetList"),
   idleDelta: qs("#idleDelta"),
@@ -137,6 +157,15 @@ els.copyPackButton.addEventListener("click", async () => {
     els.copyPackButton.textContent = "复制开写包";
   }, 1200);
 });
+els.refreshAgentButton.addEventListener("click", () => void refreshAgentProviders());
+els.agentServerUrl.addEventListener("change", () => {
+  localStorage.setItem("novel-idle:agent-url", normalizedAgentUrl());
+  void refreshAgentProviders();
+});
+els.agentProvider.addEventListener("change", () => {
+  syncAgentModelToProvider();
+});
+els.runAgentButton.addEventListener("click", () => void runAgentForSelectedChapter());
 els.manuscriptEditor.addEventListener("input", () => {
   const chapter = getSelectedChapter();
   const units = countWritingUnits(els.manuscriptEditor.value);
@@ -186,6 +215,7 @@ function renderAll(): void {
   els.scanTime.textContent = project ? new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "-";
   els.saveSnapshotButton.disabled = !project;
   els.startWritingButton.disabled = !project;
+  els.runAgentButton.disabled = !project;
   renderMetrics();
   renderDashboard();
   renderVolumeFilter();
@@ -363,6 +393,7 @@ function renderChapterDetail(): void {
     : `<span>未从章节文本中匹配到人物/场景/canon 名称。</span>`;
   renderManuscriptEditor(chapter);
   els.contextPackPreview.value = pack.packText;
+  els.agentOutput.placeholder = `准备发送 ${pack.title} 的开写包给本地 agent server。`;
 }
 
 function showEmptyDetail(): void {
@@ -372,7 +403,126 @@ function showEmptyDetail(): void {
   els.manuscriptEditor.value = "";
   els.manuscriptEditor.disabled = true;
   els.saveManuscriptButton.disabled = true;
+  els.runAgentButton.disabled = true;
   els.editorStatus.textContent = "未选择章节";
+}
+
+async function refreshAgentProviders(): Promise<void> {
+  const url = normalizedAgentUrl();
+  localStorage.setItem("novel-idle:agent-url", url);
+  els.agentStatus.textContent = "连接中...";
+  els.refreshAgentButton.disabled = true;
+  try {
+    const response = await fetch(`${url}/api/providers`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = (await response.json()) as { providers?: AgentProvider[] };
+    state.agentProviders = data.providers?.length ? data.providers : fallbackAgentProviders();
+    renderAgentProviders();
+    const ready = state.agentProviders.filter((provider) => provider.configured).map((provider) => provider.label);
+    els.agentStatus.textContent = ready.length ? `可用：${ready.join(" / ")}` : "服务已连接，但还没有配置 API key";
+  } catch (error) {
+    state.agentProviders = fallbackAgentProviders();
+    renderAgentProviders();
+    els.agentStatus.textContent = `未连接：${error instanceof Error ? error.message : "agent server 不可用"}`;
+  } finally {
+    els.refreshAgentButton.disabled = false;
+  }
+}
+
+function renderAgentProviders(): void {
+  const current = els.agentProvider.value;
+  els.agentProvider.innerHTML = state.agentProviders
+    .map((provider) => `<option value="${escapeHtml(provider.id)}">${escapeHtml(provider.label)}${provider.configured ? "" : "（未配置）"}</option>`)
+    .join("");
+  els.agentProvider.value = state.agentProviders.some((provider) => provider.id === current) ? current : state.agentProviders[0]?.id ?? "deepseek";
+  syncAgentModelToProvider();
+}
+
+function syncAgentModelToProvider(): void {
+  const provider = state.agentProviders.find((candidate) => candidate.id === els.agentProvider.value);
+  const current = els.agentModel.value.trim();
+  if (!current || !provider?.models.includes(current)) {
+    els.agentModel.value = provider?.defaultModel || "";
+  }
+}
+
+async function runAgentForSelectedChapter(): Promise<void> {
+  const chapter = getSelectedChapter();
+  if (!chapter || !state.currentContextPack) return;
+  const url = normalizedAgentUrl();
+  const task = els.agentTask.value as AgentTask;
+  const provider = els.agentProvider.value || "deepseek";
+  const model = els.agentModel.value.trim();
+  const prompt = buildAgentPrompt(task, chapter);
+
+  els.runAgentButton.disabled = true;
+  els.agentStatus.textContent = "Agent 运行中...";
+  els.agentOutput.value = "";
+  try {
+    const response = await fetch(`${url}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider,
+        model,
+        prompt,
+        contextPack: state.currentContextPack,
+        temperature: task === "draft-preview" ? 0.55 : 0.25,
+        maxTokens: task === "draft-preview" ? 8192 : 4096,
+      }),
+    });
+    const data = (await response.json()) as { content?: string; error?: string; durationMs?: number; usage?: { total_tokens?: number } };
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    els.agentOutput.value = data.content || "模型没有返回正文内容。";
+    const usage = data.usage?.total_tokens ? ` · ${data.usage.total_tokens} tokens` : "";
+    els.agentStatus.textContent = `完成：${Math.round((data.durationMs || 0) / 1000)}s${usage}`;
+  } catch (error) {
+    els.agentOutput.value = "";
+    els.agentStatus.textContent = `失败：${error instanceof Error ? error.message : "未知错误"}`;
+  } finally {
+    els.runAgentButton.disabled = !state.project;
+  }
+}
+
+function buildAgentPrompt(task: AgentTask, chapter: ChapterSummary): string {
+  const header = `对象：${chapter.volume} · ${chapter.title}。只基于下方开写包与项目资料回答，不要编造仓库外 canon。`;
+  const prompts: Record<AgentTask, string> = {
+    "context-audit": `${header}
+请检查这个开写包是否足够进入写章。输出：
+1. 放行/不放行；
+2. 缺失的硬项；
+3. 最重要的 5 条写作约束；
+4. 需要人工确认的 canon/伏笔风险。`,
+    "draft-preview": `${header}
+请按项目规则写一个正文预览稿。要求：
+- 只输出正文，不要解释；
+- 严守规格卡、POV、章尾负担；
+- 需要新 canon 时用〔待定:____〕占位，不要自造；
+- 这是预览稿，不会自动写回。`,
+    "prose-review": `${header}
+请扮演“散文审稿”，只标不改。按 P0/P1/P2 输出问题清单，每条包含短锚点、症状、改法方向。不要给整段替换稿。`,
+    "consistency-check": `${header}
+请扮演“卷一致性核查”，只查不改。检查伏笔状态、POV、时间线/年龄、称谓/口风、术语/武学、上一章衔接、规格卡兑现。输出冲突、风险、伏笔台账、回写提醒。`,
+  };
+  return prompts[task];
+}
+
+function fallbackAgentProviders(): AgentProvider[] {
+  return [
+    { id: "deepseek", label: "DeepSeek", configured: false, defaultModel: "deepseek-v4-flash", models: ["deepseek-v4-flash", "deepseek-v4-pro", "deepseek-chat", "deepseek-reasoner"] },
+    {
+      id: "kimi",
+      label: "Kimi / Moonshot",
+      configured: false,
+      defaultModel: "kimi-k2.6",
+      models: ["kimi-k2.6", "kimi-k2.7-code", "kimi-k2.7-code-highspeed", "kimi-k2.5", "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"],
+    },
+    { id: "openai", label: "OpenAI Compatible", configured: false, defaultModel: "gpt-4.1-mini", models: ["gpt-4.1-mini", "gpt-4.1"] },
+  ];
+}
+
+function normalizedAgentUrl(): string {
+  return (els.agentServerUrl.value.trim() || "http://127.0.0.1:8788").replace(/\/$/, "");
 }
 
 function renderManuscriptEditor(chapter: ChapterSummary): void {
@@ -524,4 +674,8 @@ function chapterId(chapter: ChapterSummary): string {
   return `${chapter.volume}::${chapter.key}`;
 }
 
+els.agentServerUrl.value = localStorage.getItem("novel-idle:agent-url") || els.agentServerUrl.value;
+state.agentProviders = fallbackAgentProviders();
+renderAgentProviders();
 renderAll();
+void refreshAgentProviders();

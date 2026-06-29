@@ -19,7 +19,8 @@ Kimi WebBridge and Playwright are automation adapters, not the persistence layer
 
 - Playwright: deterministic smoke/regression testing for the local UI.
 - Kimi WebBridge: optional browser bridge for authenticated web research, source capture, or cross-site workflow automation.
-- Future local service: Node/Tauri backend for safe file writes such as generating `_开写包_第NN章.md`.
+- Local agent service: Node backend for OpenAI-compatible model calls. It keeps API keys outside the browser and returns preview output for chapter tasks.
+- Future write-back: Node/Tauri backend for safe file writes such as generating `_开写包_第NN章.md`.
 
 This keeps the application usable without external accounts while still allowing richer automation.
 

@@ -57,6 +57,52 @@ You can also run:
 .\start.ps1
 ```
 
+## Local Agent Server
+
+Novel Idle can call a local OpenAI-compatible agent server for chapter preview tasks. The browser never stores API keys; keys stay in `.env` or your shell environment.
+
+Create `.env` from `.env.example` and set one or more keys:
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+Supported providers:
+
+```text
+DEEPSEEK_API_KEY=...
+KIMI_API_KEY=...
+OPENAI_API_KEY=...
+```
+
+Start the agent server in a second terminal:
+
+```powershell
+npm run agent
+```
+
+Or:
+
+```powershell
+.\start-agent.ps1
+```
+
+The UI defaults to:
+
+```text
+http://127.0.0.1:8788
+```
+
+Current agent tasks are preview-only:
+
+- Check whether the current context pack is ready.
+- Generate a chapter draft preview.
+- Run prose review.
+- Run consistency review.
+
+No model output is written back to `novel-lab` automatically.
+
 ## Verification
 
 ```powershell
@@ -73,7 +119,7 @@ The Playwright config uses the installed system Chrome channel instead of downlo
 1. Chapter detail view: manuscript, spec card, previous chapter ending, related assets.
 2. Rule-based consistency checks: missing story-state updates, POV markers, terminology drift.
 3. Context-pack generation with dry-run preview before writing `_开写包_第NN章.md`.
-4. Explicit write-back mode through a local service or Tauri shell.
+4. Explicit write-back mode through the local agent service or a Tauri shell.
 5. Kimi WebBridge adapter for authenticated browser research and external source capture.
 6. Resume-ready case study: local-first architecture, test coverage, browser automation, and real workflow usage.
 

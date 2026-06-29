@@ -160,6 +160,40 @@
                     <textarea id="contextPackPreview" readonly spellcheck="false"></textarea>
                   </div>
                 </details>
+                <details class="detail-foldout agent-foldout" open>
+                  <summary>服务端 Agent 预览</summary>
+                  <div class="detail-block agent-panel">
+                    <div class="agent-controls">
+                      <label>
+                        <span>服务</span>
+                        <input id="agentServerUrl" type="url" value="http://127.0.0.1:8788" />
+                      </label>
+                      <label>
+                        <span>模型商</span>
+                        <select id="agentProvider"></select>
+                      </label>
+                      <label>
+                        <span>模型</span>
+                        <input id="agentModel" type="text" placeholder="deepseek-v4-flash" />
+                      </label>
+                      <label>
+                        <span>任务</span>
+                        <select id="agentTask">
+                          <option value="context-audit">检查开写包</option>
+                          <option value="draft-preview">正文预览</option>
+                          <option value="prose-review">散文审稿</option>
+                          <option value="consistency-check">一致性核查</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="agent-actions">
+                      <span id="agentStatus">未连接本地 agent server</span>
+                      <button id="refreshAgentButton" class="secondary-action" type="button">刷新模型商</button>
+                      <button id="runAgentButton" class="secondary-action" type="button">发送给 Agent</button>
+                    </div>
+                    <textarea id="agentOutput" readonly spellcheck="false" placeholder="模型输出会显示在这里，不会自动写回 novel-lab。"></textarea>
+                  </div>
+                </details>
               </div>
             </aside>
           </div>

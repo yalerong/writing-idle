@@ -779,6 +779,67 @@ body:not(.has-project) .view {
   font-size: 12px;
 }
 
+.agent-panel {
+  gap: 12px;
+}
+
+.agent-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.agent-controls label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.agent-controls span,
+.agent-actions span {
+  color: var(--muted);
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 11px;
+}
+
+.agent-controls input,
+.agent-controls select {
+  min-height: 32px;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: #fffdf8;
+  color: var(--ink);
+  padding: 0 8px;
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 12px;
+}
+
+.agent-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.agent-actions span {
+  margin-right: auto;
+}
+
+#agentOutput {
+  width: 100%;
+  min-height: 260px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  color: var(--ink);
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.65;
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 12px;
+}
+
 #manuscriptEditor {
   width: 100%;
   min-height: min(62vh, 620px);
@@ -954,7 +1015,8 @@ progress {
   }
 
   .editor-heading,
-  .editor-heading > div {
+  .editor-heading > div,
+  .agent-actions {
     align-items: stretch;
     flex-direction: column;
   }
@@ -963,7 +1025,8 @@ progress {
   .content-grid,
   .idle-grid,
   .asset-layout,
-  .chapter-workbench {
+  .chapter-workbench,
+  .agent-controls {
     grid-template-columns: 1fr;
   }
 

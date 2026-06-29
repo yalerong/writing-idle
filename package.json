@@ -6,6 +6,7 @@
   "description": "Local-first production workspace for Markdown-based longform fiction projects.",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 8787",
+    "agent": "node server/agent-server.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 8787",
     "test": "vitest run",
