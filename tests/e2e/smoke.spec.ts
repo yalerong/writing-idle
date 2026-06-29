@@ -22,4 +22,6 @@ test("loads a fixture project and renders chapter context pack", async ({ page }
   await expect(page.locator("#contextPackPreview")).toHaveValue(/上一章结尾/);
   await expect(page.locator("#contextPackPreview")).toHaveValue(/沈砚看见明堂灯火/);
   await expect(page.locator("#contextPackPreview")).toHaveValue(/character\/沈砚\.md/);
+  await expect(page.locator("#manuscriptEditor")).toHaveValue(/裴问剑/);
+  await expect(page.locator("#saveManuscriptButton")).toBeDisabled();
 });

@@ -5,7 +5,7 @@ export async function pickProjectFiles(): Promise<{ rootName: string; files: Sou
   const directoryPicker = window.showDirectoryPicker;
   if (directoryPicker) {
     try {
-      const handle = await directoryPicker.call(window, { mode: "read" });
+      const handle = await directoryPicker.call(window, { mode: "readwrite" });
       const files: SourceFile[] = [];
       await walkDirectoryHandle(handle, "", files);
       return { rootName: handle.name, files };
@@ -28,6 +28,17 @@ export async function filesFromInput(fileList: FileList): Promise<{ rootName: st
   };
 }
 
+export async function writeSourceFile(source: SourceFile, text: string): Promise<SourceFile> {
+  if (!source.handle) {
+    throw new Error("当前文件没有浏览器写入权限，请使用“选择 novel-lab 文件夹”重新授权。");
+  }
+  const writable = await source.handle.createWritable();
+  await writable.write(text);
+  await writable.close();
+  const file = await source.handle.getFile();
+  return fileToRecord(file, source.path, source.handle);
+}
+
 async function walkDirectoryHandle(handle: FileSystemDirectoryHandle, prefix: string, output: SourceFile[]): Promise<void> {
   for await (const [name, entry] of handle.entries()) {
     const path = prefix ? `${prefix}/${name}` : name;
@@ -36,12 +47,12 @@ async function walkDirectoryHandle(handle: FileSystemDirectoryHandle, prefix: st
       await walkDirectoryHandle(entry, path, output);
     } else if (isReadableTextFile(name)) {
       const file = await entry.getFile();
-      output.push(await fileToRecord(file, path));
+      output.push(await fileToRecord(file, path, entry));
     }
   }
 }
 
-async function fileToRecord(file: File, explicitPath?: string): Promise<SourceFile> {
+async function fileToRecord(file: File, explicitPath?: string, handle?: FileSystemFileHandle): Promise<SourceFile> {
   const path = normalizePath(explicitPath || file.webkitRelativePath || file.name);
   return {
     path: stripRoot(path),
@@ -49,5 +60,6 @@ async function fileToRecord(file: File, explicitPath?: string): Promise<SourceFi
     size: file.size,
     modified: file.lastModified || Date.now(),
     text: await file.text(),
+    handle,
   };
 }

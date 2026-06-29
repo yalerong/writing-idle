@@ -607,6 +607,31 @@ body:not(.has-project) .view {
   font-size: 13px;
 }
 
+.editor-block {
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fffaf1;
+}
+
+.editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editor-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#editorStatus {
+  color: var(--muted);
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 12px;
+}
+
 .source-list,
 .related-assets {
   display: grid;
@@ -635,6 +660,24 @@ body:not(.has-project) .view {
   line-height: 1.55;
   font-family: Consolas, "Microsoft YaHei", monospace;
   font-size: 12px;
+}
+
+#manuscriptEditor {
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  color: var(--ink);
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.75;
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  font-size: 15px;
+}
+
+#manuscriptEditor:disabled {
+  color: var(--muted);
+  background: var(--surface-2);
 }
 
 .pill {
@@ -790,6 +833,12 @@ progress {
 
   .volume-jump {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editor-heading,
+  .editor-heading > div {
+    align-items: stretch;
     flex-direction: column;
   }
 

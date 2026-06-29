@@ -2,7 +2,7 @@ import { analyzeProject } from "./domain/scanner";
 import { buildContextPack, formatContextSource } from "./domain/contextPack";
 import { countWritingUnits, escapeHtml, formatDate, formatNumber, shortPath, startOfDay } from "./domain/text";
 import { createSnapshot, loadSnapshot, saveSnapshot } from "./domain/snapshot";
-import { filesFromInput, pickProjectFiles } from "./platform/files";
+import { filesFromInput, pickProjectFiles, writeSourceFile } from "./platform/files";
 import type { AssetGroup, ChapterSummary, ProjectModel, Snapshot, SourceFile } from "./types";
 
 interface AppState {
@@ -60,6 +60,9 @@ const els = {
   detailStatus: qs("#detailStatus"),
   detailSources: qs("#detailSources"),
   detailAssets: qs("#detailAssets"),
+  manuscriptEditor: qs<HTMLTextAreaElement>("#manuscriptEditor"),
+  editorStatus: qs("#editorStatus"),
+  saveManuscriptButton: qs<HTMLButtonElement>("#saveManuscriptButton"),
   contextPackPreview: qs<HTMLTextAreaElement>("#contextPackPreview"),
   copyPackButton: qs<HTMLButtonElement>("#copyPackButton"),
   assetTabs: document.querySelectorAll<HTMLButtonElement>(".asset-tab"),
@@ -133,6 +136,13 @@ els.copyPackButton.addEventListener("click", async () => {
     els.copyPackButton.textContent = "复制开写包";
   }, 1200);
 });
+els.manuscriptEditor.addEventListener("input", () => {
+  const chapter = getSelectedChapter();
+  const units = countWritingUnits(els.manuscriptEditor.value);
+  const suffix = chapter?.manuscript?.handle ? "可保存" : "只读来源";
+  els.editorStatus.textContent = `${formatNumber(units)} 字 · ${suffix}`;
+});
+els.saveManuscriptButton.addEventListener("click", () => void saveCurrentManuscript());
 els.saveSnapshotButton.addEventListener("click", () => {
   if (!state.project) return;
   const snapshot = createSnapshot(state.project);
@@ -284,12 +294,8 @@ function renderChapterCard(chapter: ChapterSummary): string {
 
 function renderChapterDetail(): void {
   const project = state.project;
-  if (!project || !state.selectedChapterId) {
-    showEmptyDetail();
-    return;
-  }
-  const chapter = project.chapters.find((candidate) => chapterId(candidate) === state.selectedChapterId);
-  if (!chapter) {
+  const chapter = getSelectedChapter();
+  if (!project || !chapter) {
     showEmptyDetail();
     return;
   }
@@ -310,6 +316,7 @@ function renderChapterDetail(): void {
   els.detailAssets.innerHTML = pack.relatedAssets.length
     ? pack.relatedAssets.map((asset) => `<span>${escapeHtml(shortPath(asset.path))}</span>`).join("")
     : `<span>未从章节文本中匹配到人物/场景/canon 名称。</span>`;
+  renderManuscriptEditor(chapter);
   els.contextPackPreview.value = pack.packText;
 }
 
@@ -317,6 +324,43 @@ function showEmptyDetail(): void {
   state.currentContextPack = "";
   els.detailEmpty.removeAttribute("hidden");
   els.chapterDetailContent.setAttribute("hidden", "");
+  els.manuscriptEditor.value = "";
+  els.manuscriptEditor.disabled = true;
+  els.saveManuscriptButton.disabled = true;
+  els.editorStatus.textContent = "未选择章节";
+}
+
+function renderManuscriptEditor(chapter: ChapterSummary): void {
+  const text = chapter.manuscript?.text ?? "";
+  els.manuscriptEditor.value = text;
+  els.manuscriptEditor.disabled = !chapter.manuscript;
+  els.saveManuscriptButton.disabled = !chapter.manuscript?.handle;
+  if (!chapter.manuscript) {
+    els.editorStatus.textContent = "缺少正文文件，暂不能保存";
+    return;
+  }
+  const permission = chapter.manuscript.handle ? "可保存" : "只读来源";
+  els.editorStatus.textContent = `${formatNumber(countWritingUnits(text))} 字 · ${permission}`;
+}
+
+async function saveCurrentManuscript(): Promise<void> {
+  const project = state.project;
+  const chapter = getSelectedChapter();
+  if (!project || !chapter?.manuscript) return;
+  els.saveManuscriptButton.disabled = true;
+  els.editorStatus.textContent = "保存中...";
+  try {
+    const updated = await writeSourceFile(chapter.manuscript, els.manuscriptEditor.value);
+    const updatedFiles = project.files.map((file) => (file.path === updated.path ? updated : file));
+    state.project = analyzeProject(project.rootName, updatedFiles);
+    state.previousSnapshot = loadSnapshot(project.rootName);
+    state.selectedChapterId = chapterId(chapter);
+    renderAll();
+    els.editorStatus.textContent = `${formatNumber(countWritingUnits(updated.text))} 字 · 已保存`;
+  } catch (error) {
+    els.editorStatus.textContent = error instanceof Error ? error.message : "保存失败";
+    els.saveManuscriptButton.disabled = !chapter.manuscript.handle;
+  }
 }
 
 function renderAssets(): void {
@@ -413,6 +457,12 @@ function renderCurrentView(): void {
 function filterBySearch<T>(items: T[], getText: (item: T) => string): T[] {
   if (!state.search) return items;
   return items.filter((item) => getText(item).toLowerCase().includes(state.search));
+}
+
+function getSelectedChapter(): ChapterSummary | null {
+  const project = state.project;
+  if (!project || !state.selectedChapterId) return null;
+  return project.chapters.find((candidate) => chapterId(candidate) === state.selectedChapterId) ?? null;
 }
 
 function getActiveVolumes(project: ProjectModel): ProjectModel["volumes"] {

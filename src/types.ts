@@ -6,6 +6,7 @@ export interface SourceFile {
   size: number;
   modified: number;
   text: string;
+  handle?: FileSystemFileHandle;
 }
 
 export interface VolumeSummary {
