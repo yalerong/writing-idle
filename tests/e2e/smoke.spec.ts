@@ -13,7 +13,8 @@ test("loads a fixture project and renders chapter context pack", async ({ page }
   await page.locator("#folderInput").setInputFiles(path.resolve("tests/fixtures/novel-lab"));
 
   await expect(page.getByText("2 个正文文件")).toBeVisible();
-  await page.getByRole("button", { name: "章节" }).click();
+  await page.getByRole("button", { name: "开始写作" }).click();
+  await expect(page.locator("#manuscriptEditor")).toBeVisible();
   await page.locator("#volumeQuickOpen").getByRole("button", { name: "卷一" }).click();
   await expect(page.locator("#volumeFilter")).toHaveValue("卷一");
   await page.getByRole("button", { name: /卷一 · 亡命/ }).click();

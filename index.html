@@ -49,6 +49,7 @@
           </div>
           <div class="topbar-actions">
             <input id="searchInput" type="search" placeholder="搜索文件、人物、场景、章节" />
+            <button id="startWritingButton" class="primary-action" type="button" disabled>开始写作</button>
             <button id="saveSnapshotButton" class="secondary-action" type="button" disabled>保存快照</button>
           </div>
         </header>
@@ -130,14 +131,6 @@
                   <button id="copyPackButton" class="secondary-action" type="button">复制开写包</button>
                 </div>
                 <div id="detailStatus" class="status-row"></div>
-                <div class="detail-block">
-                  <h4>来源</h4>
-                  <div id="detailSources" class="source-list"></div>
-                </div>
-                <div class="detail-block">
-                  <h4>相关资料</h4>
-                  <div id="detailAssets" class="related-assets"></div>
-                </div>
                 <div class="detail-block editor-block">
                   <div class="editor-heading">
                     <h4>正文编辑</h4>
@@ -147,6 +140,14 @@
                     </div>
                   </div>
                   <textarea id="manuscriptEditor" spellcheck="true" placeholder="这里编辑当前章节正文"></textarea>
+                </div>
+                <div class="detail-block">
+                  <h4>来源</h4>
+                  <div id="detailSources" class="source-list"></div>
+                </div>
+                <div class="detail-block">
+                  <h4>相关资料</h4>
+                  <div id="detailAssets" class="related-assets"></div>
                 </div>
                 <div class="detail-block">
                   <h4>开写包 Dry-run</h4>

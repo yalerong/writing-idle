@@ -33,6 +33,7 @@ const els = {
   scanTime: qs("#scanTime"),
   snapshotStatus: qs("#snapshotStatus"),
   saveSnapshotButton: qs<HTMLButtonElement>("#saveSnapshotButton"),
+  startWritingButton: qs<HTMLButtonElement>("#startWritingButton"),
   searchInput: qs<HTMLInputElement>("#searchInput"),
   viewTitle: qs("#viewTitle"),
   navItems: document.querySelectorAll<HTMLButtonElement>(".nav-item"),
@@ -143,6 +144,15 @@ els.manuscriptEditor.addEventListener("input", () => {
   els.editorStatus.textContent = `${formatNumber(units)} 字 · ${suffix}`;
 });
 els.saveManuscriptButton.addEventListener("click", () => void saveCurrentManuscript());
+els.startWritingButton.addEventListener("click", () => {
+  setView("chapters");
+  renderChapters();
+  renderChapterDetail();
+  window.requestAnimationFrame(() => {
+    els.manuscriptEditor.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (!els.manuscriptEditor.disabled) els.manuscriptEditor.focus();
+  });
+});
 els.saveSnapshotButton.addEventListener("click", () => {
   if (!state.project) return;
   const snapshot = createSnapshot(state.project);
@@ -175,6 +185,7 @@ function renderAll(): void {
   els.repoLabel.textContent = project?.rootName ?? "未加载工作仓";
   els.scanTime.textContent = project ? new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "-";
   els.saveSnapshotButton.disabled = !project;
+  els.startWritingButton.disabled = !project;
   renderMetrics();
   renderDashboard();
   renderVolumeFilter();
